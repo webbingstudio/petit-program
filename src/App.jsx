@@ -1,13 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import Requests from "./Requests";
 import { Navbar } from './components/Navbar';
 import { Program } from './components/Program';
 
 const settings = {
   now: new Date(),
-  updateLast: 0,
-  updateSpan: 86400000,
   filterTime: 15,
   themeDarkBg: 'white gray-600',
   themeDarkNav: 'white gray-700 hover:gray-900',
@@ -17,7 +14,16 @@ const settings = {
 const SettingsContext = React.createContext(settings);
 
 export const App = () => {
+  const path_area = '230';
+  const path_service = 'e1';
+  const path_date = settings.now.getFullYear()
+              + '-' + String( settings.now.getMonth() + 1 ).padStart( 2, '0' )
+              + '-' + String(settings.now.getDate()).padStart( 2, '0' );
 
+  const requests = {
+    fetchAll: `/list/${path_area}/${path_service}/${path_date}.json?key=${process.env.REACT_APP_NHKAPI_KEY}`
+  };
+  
   const instance = axios.create({
     baseURL: process.env.REACT_APP_NHKAPI_BASE_URL
   });
@@ -26,14 +32,24 @@ export const App = () => {
   const [programs, setPrograms] = useState([]);
 
   useEffect(() => {
-    let service = 'e1';
-
     async function fetchData() {
-      const response = await instance.get(Requests.fetchAll);
-      setData(response.data.list[service]);
+      const response = await instance.get(requests.fetchAll);
+      localStorage.setItem( 'PetitProgramData', JSON.stringify( response.data.list[path_service] ) );
+      setData(response.data.list[path_service]);
       return response;
     }
-    fetchData();
+
+    let updateLast = localStorage.getItem('PetitProgramUpdateLast') ? localStorage.getItem('PetitProgramUpdateLast') : 0;
+    if( ( localStorage.getItem('PetitProgramData') === null ) || ( settings.now.getDate() !== new Date( Number( updateLast ) ).getDate()) ) {
+      localStorage.setItem( 'PetitProgramUpdateLast', settings.now.getTime() );
+      // fetchData();
+      console.log('fetchData');
+    } else {
+      setData(JSON.parse(localStorage.getItem('PetitProgramData')));
+    }
+    console.log(settings.now.getDate());
+    console.log(new Date( Number( updateLast ) ).getDate());
+
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
