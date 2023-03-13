@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 import { Navbar } from './components/Navbar';
 import { Program } from './components/Program';
@@ -14,15 +14,7 @@ const settings = {
 const SettingsContext = React.createContext(settings);
 
 export const App = () => {
-  const path_area = '230';
-  const path_service = 'e1';
-  const path_date = settings.now.getFullYear()
-              + '-' + String( settings.now.getMonth() + 1 ).padStart( 2, '0' )
-              + '-' + String(settings.now.getDate()).padStart( 2, '0' );
-
-  const requests = {
-    fetchAll: `/list/${path_area}/${path_service}/${path_date}.json?key=${process.env.REACT_APP_NHKAPI_KEY}`
-  };
+  const isMount = useRef(false);
   
   const instance = axios.create({
     baseURL: process.env.REACT_APP_NHKAPI_BASE_URL
@@ -32,24 +24,54 @@ export const App = () => {
   const [programs, setPrograms] = useState([]);
 
   useEffect(() => {
-    async function fetchData() {
-      const response = await instance.get(requests.fetchAll);
-      localStorage.setItem( 'PetitProgramData', JSON.stringify( response.data.list[path_service] ) );
-      setData(response.data.list[path_service]);
-      return response;
+    async function fetchData( requests, path_service ) {
+      let items = [];
+      Promise.allSettled( requests ).then(
+        (response) => {
+          response.map(( item, i ) => {
+            if( item.status === 'fulfilled' ) {
+              items = items.concat( item.value.data.list[path_service] );
+            } else {
+              console.log(
+                String( settings.now.getDate() + i ) + "日のデータを取得できませんでした"
+              );
+            }
+            return item;
+          })
+          localStorage.setItem( 'PetitProgramData', JSON.stringify(items) );
+          setData(items);  
+        }
+      )
     }
 
     let updateLast = localStorage.getItem('PetitProgramUpdateLast') ? localStorage.getItem('PetitProgramUpdateLast') : 0;
-    if( ( localStorage.getItem('PetitProgramData') === null ) || ( settings.now.getDate() !== new Date( Number( updateLast ) ).getDate()) ) {
-      localStorage.setItem( 'PetitProgramUpdateLast', settings.now.getTime() );
-      // fetchData();
-      console.log('fetchData');
-    } else {
-      setData(JSON.parse(localStorage.getItem('PetitProgramData')));
-    }
-    console.log(settings.now.getDate());
-    console.log(new Date( Number( updateLast ) ).getDate());
+    if( !isMount.current ) {
+      isMount.current = true;
+      if( ( localStorage.getItem('PetitProgramData') === null ) || ( settings.now.getDate() !== new Date( Number( updateLast ) ).getDate() ) ) {
+        let requestDate = new Date(settings.now);
+        const requests = [];
+        const path_area = '230';
+        const path_service = 'e1';
 
+        for( let i = 0; i < 7; i++ ) {
+          const path_y = requestDate.getFullYear();
+          const path_m = String( requestDate.getMonth() + 1 ).padStart( 2, '0' );
+          const path_d = String( requestDate.getDate() + i ).padStart( 2, '0' );
+
+          requests.push(
+            instance.get(
+              '/list/' + path_area + '/' + path_service + '/' + path_y + '-' + path_m + '-' + path_d + '.json?key=' + process.env.REACT_APP_NHKAPI_KEY
+            )
+          );
+  
+        }
+        fetchData( requests, path_service );
+        requestDate = new Date(requestDate.setDate( requestDate.getDate() + 1 ));
+      } else {
+        setData(JSON.parse(localStorage.getItem('PetitProgramData')));
+      }
+      localStorage.setItem( 'PetitProgramUpdateLast', settings.now.getTime() );
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
