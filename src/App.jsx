@@ -4,12 +4,12 @@ import { Navbar } from './components/Navbar';
 import { Program } from './components/Program';
 
 const settings = {
-  now: new Date(),
+  now: new Date('2023-03-10'),
   filterTime: 15,
-  themeDarkBg: 'white gray-600',
+  themeDarkBg: 'white gray-500',
   themeDarkNav: 'white gray-700 hover:gray-900',
   themeLightBg: 'gray-100',
-  themeLightNav: 'hover:gray-100'
+  themeLightNav: 'hover:green-600'
 };
 const SettingsContext = React.createContext(settings);
 
@@ -85,7 +85,7 @@ export const App = () => {
       const diff = end - start;
       program.diff = diff;
       const time = new Date(diff);
-      program.time = time.getMinutes() + '分';
+      program.time = time.getMinutes();
 
       if( start.getDate() === settings.now.getDate() ) {
         program.day = '今日';
@@ -109,12 +109,16 @@ export const App = () => {
   return (
     <>
       <SettingsContext.Provider value={settings}>
-        <Navbar />
-        {programs.length > 0 &&
-          programs.map(( program ) => (
-            <Program key={program.id} program={program} />
-          ))
-        }
+        <div className="bg-gray-100">
+          <Navbar />
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 px-4 pb-24 lg:px-10 gap-2 lg:gap-4">
+            {programs.length > 0 &&
+              programs.map(( program ) => (
+                <Program key={program.id} program={program} />
+              ))
+            }
+          </div>
+        </div>
       </SettingsContext.Provider>
     </>
   );
