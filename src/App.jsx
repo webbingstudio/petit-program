@@ -1,124 +1,70 @@
-import React, { useState, useEffect, useRef } from 'react';
-import axios from 'axios';
+import { createContext } from 'react';
+import { BrowserRouter, Route, Routes } from "react-router-dom";
+
 import { Navbar } from './components/Navbar';
-import { Program } from './components/Program';
+
+import { Home } from "./components/pages/Home";
+import { Tasks } from "./components/pages/Tasks";
+import { Archives } from "./components/pages/Archives";
+import { Settings } from "./components/pages/Settings";
 
 const settings = {
   now: new Date('2023-03-10'),
   filterTime: 15,
-  themeDarkBg: 'white gray-500',
-  themeDarkNav: 'white gray-700 hover:gray-900',
-  themeLightBg: 'gray-100',
-  themeLightNav: 'hover:green-600'
+  themeName: 'light',
+  themeLightBody: 'bg-gray-100',
+  themeLightBg: 'bg-white',
+  themeLightBorder: 'border-gray-200',
+  themeLightNav: 'bg-gray-100',
+  themeLightText: 'text-gray-800',
+  themeLightInverseText: 'text-gray-100',
+  themeLightPrimaryBg: 'bg-green-600',
+  themeLightPrimaryBorder: 'border-green-600',
+  themeLightPrimaryText: 'text-green-600',
+  themeLightShadow: { boxShadow: '0px 0px 6px 0 rgba(0,0,0,0.25)' },
+  themeDarkBody: 'bg-gray-900',
+  themeDarkBg: 'bg-gray-800',
+  themeDarkBorder: 'border-gray-700',
+  themeDarkNav: 'bg-gray-800',
+  themeDarkText: 'text-gray-100',
+  themeDarkInverseText: 'text-gray-900',
+  themeDarkPrimaryBg: 'bg-blue-500',
+  themeDarkPrimaryBorder: 'border-blue-500',
+  themeDarkPrimaryText: 'text-blue-500',
+  themeDarkShadow: { boxShadow: '0px 0px 6px 0 rgba(0,0,0,0.5)' },
 };
-const SettingsContext = React.createContext(settings);
+export const SettingsContext = createContext();
+
+const classes = {
+  body: settings.themeName === 'light' ? settings.themeLightBody : settings.themeDarkBody,
+  bg: settings.themeName === 'light' ? settings.themeLightBg : settings.themeDarkBg,
+  border: settings.themeName === 'light' ? settings.themeLightBorder : settings.themeDarkBorder,
+  nav: settings.themeName === 'light' ? settings.themeLightNav : settings.themeDarkNav,
+  text: settings.themeName === 'light' ? settings.themeLightText : settings.themeDarkText,
+  inverseText: settings.themeName === 'light' ? settings.themeLightInverseText : settings.themeDarkInverseText,
+  primaryBg: settings.themeName === 'light' ? settings.themeLightPrimaryBg : settings.themeDarkPrimaryBg,
+  primaryText: settings.themeName === 'light' ? settings.themeLightPrimaryText : settings.themeDarkPrimaryText,
+  primaryBorder: settings.themeName === 'light' ? settings.themeLightPrimaryBorder : settings.themeDarkPrimaryBorder,
+  shadow: settings.themeName === 'light' ? settings.themeLightShadow : settings.themeDarkShadow,
+};
+export const ClassesContext = createContext();
 
 export const App = () => {
-  const isMount = useRef(false);
   
-  const instance = axios.create({
-    baseURL: process.env.REACT_APP_NHKAPI_BASE_URL
-  });
-
-  const [data, setData] = useState([]);
-  const [programs, setPrograms] = useState([]);
-
-  useEffect(() => {
-    async function fetchData( requests, path_service ) {
-      let items = [];
-      Promise.allSettled( requests ).then(
-        (response) => {
-          response.map(( item, i ) => {
-            if( item.status === 'fulfilled' ) {
-              items = items.concat( item.value.data.list[path_service] );
-            } else {
-              console.log(
-                String( settings.now.getDate() + i ) + "日のデータを取得できませんでした"
-              );
-            }
-            return item;
-          })
-          localStorage.setItem( 'PetitProgramData', JSON.stringify(items) );
-          setData(items);  
-        }
-      )
-    }
-
-    let updateLast = localStorage.getItem('PetitProgramUpdateLast') ? localStorage.getItem('PetitProgramUpdateLast') : 0;
-    if( !isMount.current ) {
-      isMount.current = true;
-      if( ( localStorage.getItem('PetitProgramData') === null ) || ( settings.now.getDate() !== new Date( Number( updateLast ) ).getDate() ) ) {
-        let requestDate = new Date(settings.now);
-        const requests = [];
-        const path_area = '230';
-        const path_service = 'e1';
-
-        for( let i = 0; i < 7; i++ ) {
-          const path_y = requestDate.getFullYear();
-          const path_m = String( requestDate.getMonth() + 1 ).padStart( 2, '0' );
-          const path_d = String( requestDate.getDate() + i ).padStart( 2, '0' );
-
-          requests.push(
-            instance.get(
-              '/list/' + path_area + '/' + path_service + '/' + path_y + '-' + path_m + '-' + path_d + '.json?key=' + process.env.REACT_APP_NHKAPI_KEY
-            )
-          );
-  
-        }
-        fetchData( requests, path_service );
-        requestDate = new Date(requestDate.setDate( requestDate.getDate() + 1 ));
-      } else {
-        setData(JSON.parse(localStorage.getItem('PetitProgramData')));
-      }
-      localStorage.setItem( 'PetitProgramUpdateLast', settings.now.getTime() );
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  useEffect(() => {
-    let temp = [];
-    const youbi = ['日', '月', '火', '水', '木', '金', '土'];
-    data.map(( program ) => {
-
-      const start = new Date(program.start_time);
-      const end = new Date(program.end_time);
-      const diff = end - start;
-      program.diff = diff;
-      const time = new Date(diff);
-      program.time = time.getMinutes();
-
-      if( start.getDate() === settings.now.getDate() ) {
-        program.day = '今日';
-      } else if( start.getDate() === settings.now.getDate() + 1 ) {
-        program.day = '明日';
-      } else {
-        program.day = youbi[start.getDay()] + '曜日';
-      }
-      program.start = start.getHours() + ':' + ('0' + start.getMinutes()).slice(-2);
-
-      if( ( ( start - settings.now ) > 0 ) && ( diff < ( ( settings.filterTime * 60 ) + 59 ) * 1000 ) ) {
-        return temp.push(program);
-      } else {
-        return false;
-      }
-
-    });
-    setPrograms(temp);
-  }, [data]);
-
   return (
     <>
-      <SettingsContext.Provider value={settings}>
-        <div className="bg-gray-100">
+      <SettingsContext.Provider value={[settings, classes]}>
+      <BrowserRouter>
+      <div className={`${classes.body} ${classes.text}`}>
           <Navbar />
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 px-4 pb-24 lg:px-10 gap-2 lg:gap-4">
-            {programs.length > 0 &&
-              programs.map(( program ) => (
-                <Program key={program.id} program={program} />
-              ))
-            }
-          </div>
+          <Routes>
+            <Route path="/" element={<Home />} />
+            <Route path="tasks" element={<Tasks />} />
+            <Route path="archives" element={<Archives />} />
+            <Route path="settings" element={<Settings />} />
+          </Routes>
         </div>
+      </BrowserRouter>
       </SettingsContext.Provider>
     </>
   );
