@@ -4,6 +4,7 @@ import { NavLink } from "react-router-dom";
 
 export const Navbar = () => {
   const [,classes] = useContext(SettingsContext);
+  const linkCommonClasses = `${classes.primaryText} flex flex-col justify-center items-center self-stretch flex-grow-0 flex-shrink-0 relative gap-0.5 py-3`;
 
   return (
     <>
@@ -14,7 +15,12 @@ export const Navbar = () => {
       >
         <div className="flex flex-col justify-center items-center self-stretch flex-grow">
           <div className="flex flex-col justify-center items-center self-stretch flex-grow-0 flex-shrink-0">
-            <a href="/" className={`${classes.primaryText} flex flex-col justify-center items-center self-stretch flex-grow-0 flex-shrink-0 relative gap-0.5 py-3`}>
+            <NavLink
+              to="/"
+              className={
+                ({ isActive }) => isActive ? `before:content-[''] before:absolute before:left-0 before:top-0 before:w-full before:h-1 before:${classes.primaryBg} ${linkCommonClasses}` : linkCommonClasses
+              }
+            >
               <svg
                 width={25}
                 height={25}
@@ -34,12 +40,17 @@ export const Navbar = () => {
               <p className="flex-grow-0 flex-shrink-0 text-xs font-medium text-left">
                 番組表
               </p>
-            </a>
+            </NavLink>
           </div>
         </div>
         <div className="flex flex-col justify-center items-center self-stretch flex-grow">
           <div className="flex flex-col justify-center items-center self-stretch flex-grow-0 flex-shrink-0">
-            <a href="tasks" className={`${classes.text} flex flex-col justify-center items-center self-stretch flex-grow-0 flex-shrink-0 relative gap-0.5 py-3`}>
+            <NavLink
+              to="/tasks"
+              className={
+                ({ isActive }) => isActive ? `before:content-[''] before:absolute before:left-0 before:top-0 before:w-full before:h-1 before:${classes.primaryBg} ${linkCommonClasses}` : linkCommonClasses
+              }
+            >
               <svg
                 width={25}
                 height={25}
@@ -58,12 +69,17 @@ export const Navbar = () => {
               <p className="flex-grow-0 flex-shrink-0 text-xs font-medium text-left">
                 見たい
               </p>
-            </a>
+            </NavLink>
           </div>
         </div>
         <div className="flex flex-col justify-center items-center self-stretch flex-grow">
           <div className="flex flex-col justify-center items-center self-stretch flex-grow-0 flex-shrink-0">
-            <a href="archives" className={`${classes.text} flex flex-col justify-center items-center self-stretch flex-grow-0 flex-shrink-0 relative gap-0.5 py-3`}>
+            <NavLink
+              to="/archives"
+              className={
+                ({ isActive }) => isActive ? `before:content-[''] before:absolute before:left-0 before:top-0 before:w-full before:h-1 before:${classes.primaryBg} ${linkCommonClasses}` : linkCommonClasses
+              }
+            >
               <svg
                 width={25}
                 height={25}
@@ -83,12 +99,17 @@ export const Navbar = () => {
               <p className="flex-grow-0 flex-shrink-0 text-xs font-medium text-left">
                 スキ
               </p>
-            </a>
+            </NavLink>
           </div>
         </div>
         <div className="flex flex-col justify-center items-center self-stretch flex-grow">
           <div className="flex flex-col justify-center items-center self-stretch flex-grow-0 flex-shrink-0">
-            <a href="settings" className={`${classes.text} flex flex-col justify-center items-center self-stretch flex-grow-0 flex-shrink-0 relative gap-0.5 py-3`}>
+            <NavLink
+              to="/settings"
+              className={
+                ({ isActive }) => isActive ? `before:content-[''] before:absolute before:left-0 before:top-0 before:w-full before:h-1 before:${classes.primaryBg} ${linkCommonClasses}` : linkCommonClasses
+              }
+            >
               <svg
                 width={25}
                 height={25}
@@ -106,7 +127,7 @@ export const Navbar = () => {
               <p className="flex-grow-0 flex-shrink-0 text-xs font-medium text-left">
                 設定
               </p>
-            </a>
+            </NavLink>
           </div>
         </div>
       </div>
